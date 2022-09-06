@@ -20,6 +20,7 @@ export class PolicyService implements InternalPolicyServiceAbstraction {
   private _policies: BehaviorSubject<Policy[]> = new BehaviorSubject([]);
 
   policies$ = this._policies.asObservable();
+  appliedPolicies$ = this.policies$.pipe(map((policies) => this.appliedPolicies(policies)));
 
   constructor(
     private stateService: StateService,
@@ -190,10 +191,33 @@ export class PolicyService implements InternalPolicyServiceAbstraction {
             o.status >= OrganizationUserStatusType.Accepted &&
             o.usePolicies &&
             policySet.has(o.id) &&
-            !this.isExcemptFromPolicies(o, policyType)
+            !this.isExemptFromPolicies(o, policyType)
         );
       })
     );
+  }
+
+  // Filters out policies that to not apply to the user
+  private async appliedPolicies(policies: Policy[]): Promise<Policy[]> {
+    // TODO: This should be injected using combineLatest as an argument
+    const organizations = await this.organizationService.getAll();
+
+    const enabledPolicies = policies.filter((p) => p.enabled);
+
+    // Filter out policies that belong to organizations the user is either only
+    //  invited to, or exempted from.
+    const activePolicies = enabledPolicies.filter((policy) => {
+      const organization = organizations.find((o) => o.id == policy.organizationId);
+
+      return (
+        organization.enabled &&
+        organization.status >= OrganizationUserStatusType.Accepted &&
+        organization.usePolicies &&
+        !this.isExemptFromPolicies(organization, policy.type)
+      );
+    });
+
+    return activePolicies;
   }
 
   async upsert(policy: PolicyData): Promise<any> {
@@ -220,7 +244,7 @@ export class PolicyService implements InternalPolicyServiceAbstraction {
     await this.stateService.setEncryptedPolicies(null, { userId: userId });
   }
 
-  private isExcemptFromPolicies(organization: Organization, policyType: PolicyType) {
+  private isExemptFromPolicies(organization: Organization, policyType: PolicyType) {
     if (policyType === PolicyType.MaximumVaultTimeout) {
       return organization.type === OrganizationUserType.Owner;
     }
