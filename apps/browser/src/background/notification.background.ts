@@ -446,8 +446,9 @@ export default class NotificationBackground {
   }
 
   private async allowPersonalOwnership(): Promise<boolean> {
-    const policies = await firstValueFrom(this.policyService.appliedPolicies$);
-
-    return policies.find((p) => p.type == PolicyType.PersonalOwnership) != null;
+    const policies = await firstValueFrom(
+      this.policyService.filterAppliedPolicies$(PolicyType.PersonalOwnership)
+    );
+    return policies.length > 0;
   }
 }

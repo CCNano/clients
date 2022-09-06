@@ -24,11 +24,7 @@ export abstract class PolicyService {
     orgId: string
   ) => [ResetPasswordPolicyOptions, boolean];
   mapPoliciesFromToken: (policiesResponse: ListResponse<PolicyResponse>) => Policy[];
-  policyAppliesToUser$: (
-    policyType: PolicyType,
-    policyFilter?: (policy: Policy) => boolean,
-    userId?: string
-  ) => Observable<boolean>;
+  filterAppliedPolicies$: (policyType: PolicyType) => Observable<Policy[]>;
 }
 
 export abstract class InternalPolicyService extends PolicyService {

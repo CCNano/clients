@@ -172,28 +172,9 @@ export class PolicyService implements InternalPolicyServiceAbstraction {
     return policiesData.map((p) => new Policy(p));
   }
 
-  policyAppliesToUser$(
-    policyType: PolicyType,
-    policyFilter: (policy: Policy) => boolean = (p) => true,
-    userId?: string
-  ) {
-    return this.policies$.pipe(
-      concatMap(async (policies) => {
-        const organizations = await this.organizationService.getAll(userId);
-        const filteredPolicies = policies.filter(
-          (p) => p.type === policyType && p.enabled && policyFilter(p)
-        );
-        const policySet = new Set(filteredPolicies.map((p) => p.organizationId));
-
-        return organizations.some(
-          (o) =>
-            o.enabled &&
-            o.status >= OrganizationUserStatusType.Accepted &&
-            o.usePolicies &&
-            policySet.has(o.id) &&
-            !this.isExemptFromPolicies(o, policyType)
-        );
-      })
+  filterAppliedPolicies$(policyType: PolicyType) {
+    return this.appliedPolicies$.pipe(
+      map((policies) => policies.filter((p) => p.type === policyType))
     );
   }
 
