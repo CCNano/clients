@@ -20,7 +20,7 @@ export class PolicyService implements InternalPolicyServiceAbstraction {
   private _policies: BehaviorSubject<Policy[]> = new BehaviorSubject([]);
 
   policies$ = this._policies.asObservable();
-  appliedPolicies$ = this.policies$.pipe(map((policies) => this.appliedPolicies(policies)));
+  appliedPolicies$ = this.policies$.pipe(concatMap((policies) => this.appliedPolicies(policies)));
 
   constructor(
     private stateService: StateService,
