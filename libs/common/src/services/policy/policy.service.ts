@@ -178,6 +178,10 @@ export class PolicyService implements InternalPolicyServiceAbstraction {
     );
   }
 
+  hasAppliedPolicy$(policyType: PolicyType) {
+    return this.filterAppliedPolicies$(policyType).pipe(map((policies) => policies.length > 0));
+  }
+
   // Filters out policies that to not apply to the user
   private async appliedPolicies(policies: Policy[]): Promise<Policy[]> {
     // TODO: This should be injected using combineLatest as an argument
